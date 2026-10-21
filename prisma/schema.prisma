@@ -1,0 +1,118 @@
+// Safe Bharat Fire and Safety Solutions — persistent data model.
+// Run `npm run db:migrate` after changing this file.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EnquiryType {
+  CONTACT
+  QUOTE
+  AMC
+  EQUIPMENT
+  CALLBACK
+}
+
+enum EnquirySource {
+  WEBSITE_FORM
+  CHATBOT
+}
+
+enum EnquiryStatus {
+  NEW
+  IN_PROGRESS
+  CLOSED
+  SPAM
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  NOT_CONFIGURED
+}
+
+enum ContactMethod {
+  PHONE
+  EMAIL
+  WHATSAPP
+}
+
+model Enquiry {
+  id                     String         @id @default(uuid()) @db.Uuid
+  referenceNumber        String         @unique @db.VarChar(20)
+  // Client-generated key that makes resubmission of the same form idempotent.
+  idempotencyKey         String         @unique @db.VarChar(64)
+  enquiryType            EnquiryType
+  source                 EnquirySource  @default(WEBSITE_FORM)
+  status                 EnquiryStatus  @default(NEW)
+
+  fullName               String         @db.VarChar(120)
+  email                  String         @db.VarChar(254)
+  phone                  String         @db.VarChar(20)
+  companyName            String?        @db.VarChar(160)
+  jobRole                String?        @db.VarChar(120)
+  siteLocation           String?        @db.VarChar(200)
+  serviceRequired        String?        @db.VarChar(120)
+  message                String         @db.Text
+
+  // Type-specific details (quote scope, AMC system type, product slug, etc.).
+  approximateScope       String?        @db.VarChar(500)
+  systemType             String?        @db.VarChar(120)
+  equipmentQuantity      String?        @db.VarChar(120)
+  currentMaintenance     String?        @db.VarChar(500)
+  preferredContactMethod ContactMethod?
+  productSlug            String?        @db.VarChar(120)
+
+  consentGiven           Boolean
+  consentAt              DateTime
+  privacyNoticeVersion   String         @db.VarChar(20)
+
+  // Notification outbox: the enquiry is always saved first; email delivery is retried.
+  emailStatus            EmailStatus    @default(PENDING)
+  emailAttempts          Int            @default(0)
+  emailLastError         String?        @db.VarChar(500)
+  emailLastAttemptAt     DateTime?
+  emailSentAt            DateTime?
+  acknowledgementSentAt  DateTime?
+
+  attachments            EnquiryAttachment[]
+
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  @@index([createdAt])
+  @@index([enquiryType, createdAt])
+  @@index([status, createdAt])
+  @@index([emailStatus, emailAttempts])
+  @@index([email])
+}
+
+model EnquiryAttachment {
+  id           String   @id @default(uuid()) @db.Uuid
+  enquiryId    String   @db.Uuid
+  enquiry      Enquiry  @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  // Object key inside the private bucket. Files are never stored in a public path.
+  storageKey   String   @unique @db.VarChar(300)
+  originalName String   @db.VarChar(200)
+  contentType  String   @db.VarChar(100)
+  sizeBytes    Int
+  sha256       String   @db.VarChar(64)
+  createdAt    DateTime @default(now())
+
+  @@index([enquiryId])
+}
+
+// Fixed-window counters shared by every application instance.
+model RateLimitBucket {
+  key       String   @id @db.VarChar(200)
+  count     Int
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}

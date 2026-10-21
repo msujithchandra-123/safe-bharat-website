@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+/*
+ * Safe Bharat design tokens.
+ * Navy carries structure, red is reserved for primary actions and accents,
+ * white and cool grey hold content.
+ */
+@theme {
+  --color-navy-950: #04122a;
+  --color-navy-900: #071b3b;
+  --color-navy-800: #0d2a55;
+  --color-navy-700: #163a70;
+  --color-navy-600: #24508f;
+  --color-navy-100: #e3e9f3;
+  --color-navy-50: #f1f4f9;
+
+  --color-brand-red: #d71920;
+  --color-brand-red-dark: #b0141a;
+  --color-brand-red-50: #fdecec;
+
+  --color-surface: #ffffff;
+  --color-mist: #f2f4f7;
+  --color-line: #e4e7ec;
+  --color-line-strong: #d0d5dd;
+  --color-ink: #101828;
+  --color-body: #475467;
+  --color-muted: #667085;
+
+  --color-success: #067647;
+  --color-success-50: #ecfdf3;
+  --color-warning: #b54708;
+  --color-warning-50: #fffaeb;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-raised: 0 12px 32px -12px rgb(7 27 59 / 0.22);
+
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    color: var(--color-ink);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand-red);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: var(--color-navy-100);
+  }
+}
+
+/* Blueprint grid used on navy sections. */
+.bg-blueprint {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.bg-blueprint-light {
+  background-image:
+    linear-gradient(rgb(7 27 59 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(7 27 59 / 0.045) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Preloader: CSS-only so it never waits for JavaScript. */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  pointer-events: none;
+  animation: preloader-out 0.35s ease-in 0.75s forwards;
+}
+.preloader-mark {
+  animation: preloader-mark 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.preloader-bar {
+  transform-origin: left;
+  animation: preloader-bar 0.7s cubic-bezier(0.65, 0, 0.35, 1) 0.1s both;
+}
+html.sb-seen .preloader {
+  display: none;
+}
+@keyframes preloader-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@keyframes preloader-mark {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes preloader-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .preloader {
+    display: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Scroll-reveal content must always be visible when printed. */
+@media print {
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .preloader {
+    display: none;
+  }
+}

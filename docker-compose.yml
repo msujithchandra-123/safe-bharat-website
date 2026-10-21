@@ -1,0 +1,23 @@
+# Local development and test database only. Production uses a managed PostgreSQL service.
+services:
+  postgres:
+    image: postgres:15
+    container_name: safebharat_postgres
+    restart: "no"
+    environment:
+      POSTGRES_USER: safebharat
+      POSTGRES_PASSWORD: safebharat_local
+      POSTGRES_DB: safebharat
+    ports:
+      - "5444:5432"
+    volumes:
+      - safebharat_pgdata:/var/lib/postgresql/data
+      - ./scripts/db/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U safebharat -d safebharat"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  safebharat_pgdata:
