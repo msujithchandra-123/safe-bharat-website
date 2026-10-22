@@ -36,12 +36,15 @@ Status key:
 | `NODE_ENV` | `production` makes Turnstile fail closed and turns on HSTS and the stricter CSP | Set by Next.js | `src/lib/env.ts`, `next.config.ts`, `src/lib/logger.ts` | – | Set automatically by `next build` / `next start` |
 | `VERCEL_ENV` | Only `production` allows search indexing | Set by Vercel | `src/lib/seo.ts` | – | Automatic on Vercel |
 
-### Email (Resend)
+### Email (SMTP, Gmail by default)
 
 | Variable | Purpose | Required | Used in | Local status | Production |
 | --- | --- | --- | --- | --- | --- |
-| `RESEND_API_KEY` | Resend API key, server-only | Required for email | `src/lib/env.ts` → `src/lib/runtime.ts` | Set | **Pending**: a production key |
-| `EMAIL_FROM` (alias `CONTACT_FROM_EMAIL`) | Sender, for example `Safe Bharat <enquiries@<verified-domain>>`. Free-mail domains such as gmail.com are refused by the code (`senderUnverifiable`). | Required for email | `src/lib/env.ts` | Set, sender domain **`resend.dev`** (the Resend testing sender) | **Pending**: must be on a domain verified in Resend |
+| `SMTP_HOST` | SMTP server. Default `smtp.gmail.com`. | Optional | `src/lib/env.ts` → `src/lib/runtime.ts` | Set, `smtp.gmail.com` | Same |
+| `SMTP_PORT` | `465` (implicit TLS, default) or `587` (STARTTLS) | Optional | `src/lib/env.ts` | Set, `465` | Same |
+| `SMTP_USER` | Mailbox the site signs in to and sends from | Required for email | `src/lib/env.ts` | Set, `safebharatsales@gmail.com` | Same |
+| `SMTP_PASSWORD` | Gmail **App Password** (needs 2-Step Verification), server-only. The normal account password does not work. Spaces are stripped. | Required for email | `src/lib/env.ts` | Set | Set in the host's environment settings |
+| `EMAIL_FROM` (alias `CONTACT_FROM_EMAIL`) | Sender display, for example `Safe Bharat <safebharatsales@gmail.com>`. Defaults to `Safe Bharat <SMTP_USER>`; Gmail rewrites any other address. | Optional | `src/lib/env.ts` | Set | Same |
 | `ENQUIRY_NOTIFICATION_TO` (alias `CONTACT_NOTIFICATION_EMAIL`) | Comma-separated business inboxes for new-enquiry notifications | Required for email | `src/lib/env.ts` | Set, to `safebharatsales@gmail.com` | **Verify** delivery on the live site |
 | `SEND_CUSTOMER_ACKNOWLEDGEMENT` | `false` disables the customer acknowledgement email. Default: enabled. | Optional | `src/lib/env.ts` | Set, `true` | Owner decision |
 | `EMAIL_AUTO_RETRY` | `false` pauses automatic resends (after submissions and in the cron job). Unset or `true` means enabled. | Optional | `src/lib/env.ts`, `src/lib/enquiries/automatic-retry.ts` | Set, **`false`** (paused locally) | Leave **unset** once the sender is verified |
@@ -82,7 +85,7 @@ Status key:
 | `ENQUIRY_RETENTION_DAYS` | Days before the maintenance job deletes an enquiry. Integer, at least 30; otherwise 730 is used. | Optional | `src/lib/env.ts` | Set, `730` | Must match the privacy policy (legal and owner decision) |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Shows WhatsApp shortcuts when set | Optional | `src/config/site.ts` | Empty (hidden) | Owner decision |
 | `DEBUG_LOGS` | Enables logger output while `NODE_ENV=test` | Tests only | `src/lib/logger.ts` | Not set | Not used |
-| `LIVE_EMAIL_TEST_TO`, `LIVE_EMAIL_TEST_SEND` | Opt-in, one-off live Resend test (`npm run email:test`) | Manual testing only | `tests/live/resend-test-email.test.ts` | Not set | Never set permanently |
+| `LIVE_EMAIL_TEST_TO`, `LIVE_EMAIL_TEST_SEND` | Opt-in, one-off live SMTP test (`npm run email:test`) | Manual testing only | `tests/live/smtp-test-email.test.ts` | Not set | Never set permanently |
 
 ## Production configuration checklist
 

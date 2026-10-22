@@ -9,7 +9,7 @@ The site is a standard Next.js 16 Node.js application. Vercel is the simplest ho
 | Service | What to do | Environment variables |
 | --- | --- | --- |
 | **PostgreSQL** (Neon, Supabase, AWS RDS, Vercel Postgres…) | Create a database; enable automated backups (see OPERATIONS.md). Use a pooled connection string on serverless hosts. | `DATABASE_URL` |
-| **Resend** | Add and verify the sending domain (SPF/DKIM DNS records), create an API key. | `RESEND_API_KEY`, `EMAIL_FROM` (an address on the verified domain), `ENQUIRY_NOTIFICATION_TO`, `SEND_CUSTOMER_ACKNOWLEDGEMENT` |
+| **Gmail SMTP** | On the sending Gmail account, turn on 2-Step Verification and create an App Password. | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` (the App Password), `EMAIL_FROM` (on the `SMTP_USER` mailbox), `ENQUIRY_NOTIFICATION_TO`, `SEND_CUSTOMER_ACKNOWLEDGEMENT` |
 | **Cloudflare Turnstile** | Create a widget for the production hostname. | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |
 | **Google Gemini** (optional, AI assistant) | In Google AI Studio (aistudio.google.com/apikey), create a key in a project with **billing enabled** (paid tier). | `LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_THINKING_LEVEL` |
 | **Anthropic** (optional alternative) | Create an API key at platform.claude.com/settings/keys. | `LLM_PROVIDER=anthropic`, `LLM_API_KEY`, `LLM_MODEL`, `LLM_EFFORT` |

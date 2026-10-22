@@ -137,9 +137,9 @@ The reference number format is `SB-YYMMDD-XXXXX`, where the date is in IST and t
   - `Enquiry` insert, plus an optional `EnquiryAttachment` row;
   - `Enquiry` updates for the email outcome;
   - `RateLimitBucket` upserts.
-- **Resend:**
-  - a notification to `ENQUIRY_NOTIFICATION_TO`, with Resend idempotency key `notify-<enquiry id>` and Reply-To set to the customer's address;
-  - then an acknowledgement to the customer if `SEND_CUSTOMER_ACKNOWLEDGEMENT` is not `false`, with key `ack-<enquiry id>`.
+- **SMTP (Gmail by default):**
+  - a notification to `ENQUIRY_NOTIFICATION_TO`, with Message-ID `<notify-<enquiry id>@safebharat.local>` and Reply-To set to the customer's address;
+  - then an acknowledgement to the customer if `SEND_CUSTOMER_ACKNOWLEDGEMENT` is not `false`, with Message-ID `<ack-<enquiry id>@safebharat.local>`.
 - **S3-compatible storage:** a `PutObject` under `enquiries/YYYY/MM/<uuid>.<ext>`. The object is deleted again if the database write fails.
 - **Cloudflare:** a Turnstile siteverify request, which includes the client IP.
 
@@ -212,7 +212,7 @@ The reference number format is `SB-YYMMDD-XXXXX`, where the date is in IST and t
   "checks": {
     "database": "ok | unavailable | not-configured",
     "emailAutoRetry": "enabled | paused",
-    "email": "configured | sender-domain-not-verifiable | not-configured",
+    "email": "configured | not-configured",
     "spamProtection": "configured | test-keys | not-configured",
     "assistant": "configured | not-configured",
     "assistantProvider": "gemini | anthropic | <value of LLM_PROVIDER>",
@@ -223,7 +223,7 @@ The reference number format is `SB-YYMMDD-XXXXX`, where the date is in IST and t
 
 **What the checks mean:**
 - **Configuration status only:** it reports whether each integration is configured, never the configured values.
-- **`email: "configured"` only checks configuration:** a key, a sender and a recipient are set, and the sender is not a free-mail domain. It does **not** prove that Resend accepts the sender or delivers to the recipient. See the handover, section E.
+- **`email: "configured"` only checks configuration:** an SMTP user, password, sender and recipient are set. It does **not** prove that the SMTP server accepts the login or delivers to the recipient. See the handover, section E.
 - **Public:** the route is unauthenticated and disallowed in `robots.txt` (`Disallow: /api/`).
 
 ## GET `/api/v1/cron/maintenance`

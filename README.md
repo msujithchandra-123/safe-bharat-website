@@ -14,7 +14,7 @@ Corporate website for Safe Bharat Fire and Safety Solutions (Visakhapatnam, Andh
 | UI | Tailwind CSS v4, Framer Motion, Lucide icons, Manrope + Inter (`next/font`) |
 | Forms | React Hook Form + Zod (one schema shared by browser, API and chatbot) |
 | Data | PostgreSQL + Prisma 7 (`@prisma/adapter-pg`), migrations in `prisma/migrations` |
-| Email | Resend (verified sending domain, idempotent sends, retry outbox) |
+| Email | SMTP via Nodemailer (Gmail with an App Password by default), retry outbox |
 | Anti-spam | Cloudflare Turnstile (server-side verification), honeypot, PostgreSQL-backed rate limiting |
 | AI | Google Gemini (`@google/genai`) or Anthropic Claude (`@anthropic-ai/sdk`), selected with `LLM_PROVIDER`, behind a `ChatProvider` interface |
 | Tests | Vitest + Testing Library (unit/component), Vitest against real PostgreSQL (integration), Playwright + axe (E2E/accessibility) |
@@ -58,17 +58,21 @@ npm start
 
 Check `http://localhost:3000/api/v1/health`: `"database": "ok"` means Prisma reached PostgreSQL. The integration tests (`npm run test:integration`) additionally need `TEST_DATABASE_URL` pointing at a separate database whose name ends in `_test`.
 
-## Email notifications (Resend)
+## Email notifications (Gmail SMTP)
 
-1. Create a Resend account and **add and verify a domain you own** (Resend → Domains; add the SPF/DKIM DNS records it shows at your DNS provider). A Gmail address cannot be used as the sender.
-2. Create an API key (Resend → API Keys, "sending access").
+The site signs in to a Gmail mailbox over SMTP and sends every notification from it, to any recipient. No domain is required.
+
+1. Sign in to the sending Gmail account (`safebharatsales@gmail.com`) and turn on **2-Step Verification** (myaccount.google.com → Security).
+2. Create an **App Password** at myaccount.google.com/apppasswords. Your normal Gmail password does not work for SMTP.
 3. Set in `.env.local` (locally) and in the hosting provider's environment settings (production) — never in a `NEXT_PUBLIC_*` variable:
-   - `RESEND_API_KEY`
-   - `EMAIL_FROM` (alias `CONTACT_FROM_EMAIL`), e.g. `Safe Bharat <enquiries@your-domain.in>`
+   - `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`
+   - `SMTP_USER=safebharatsales@gmail.com`
+   - `SMTP_PASSWORD` = the 16-character App Password (spaces are ignored)
+   - `EMAIL_FROM` (alias `CONTACT_FROM_EMAIL`), e.g. `Safe Bharat <safebharatsales@gmail.com>`. Keep it on the `SMTP_USER` mailbox; Gmail rewrites any other From address.
    - `ENQUIRY_NOTIFICATION_TO` (alias `CONTACT_NOTIFICATION_EMAIL`) = `safebharatsales@gmail.com`
 4. Restart the server and check `/api/v1/health`: `"email": "configured"`.
 
-Every enquiry is saved before any email is attempted. The notification includes the enquiry type, contact details, message and service/product/AMC details, with the customer's address as Reply-To. Failures and timeouts (10 s) are recorded on the enquiry and retried by the maintenance job with an idempotency key, so retries never duplicate the enquiry or the email.
+Every enquiry is saved before any email is attempted. The notification includes the enquiry type, contact details, message and service/product/AMC details, with the customer's address as Reply-To. Failures and timeouts (10 s) are recorded on the enquiry and retried by the maintenance job. Each email keeps a fixed Message-ID across retries, but SMTP cannot guarantee exactly-once delivery: a send that times out after the server accepted it can arrive twice. Gmail allows roughly 500 recipients per day.
 
 ## Commands
 
