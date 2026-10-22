@@ -9,7 +9,7 @@ export async function POST(request: Request): Promise<Response> {
     chat: () => ({
       provider: createChatProvider(),
       knowledge: getKnowledgeIndex(),
-      secrets: [...chatSecrets(), serverEnv.email().apiKey].filter((s): s is string => Boolean(s)),
+      secrets: [...chatSecrets(), serverEnv.email().password].filter((s): s is string => Boolean(s)),
     }),
     rateLimitStore,
     rateLimitSalt: serverEnv.rateLimitSalt(),

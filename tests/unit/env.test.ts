@@ -1,7 +1,16 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { serverEnv } from "@/lib/env";
 
-const KEYS = ["RESEND_API_KEY", "EMAIL_FROM", "CONTACT_FROM_EMAIL", "ENQUIRY_NOTIFICATION_TO", "CONTACT_NOTIFICATION_EMAIL"] as const;
+const KEYS = [
+  "SMTP_HOST",
+  "SMTP_PORT",
+  "SMTP_USER",
+  "SMTP_PASSWORD",
+  "EMAIL_FROM",
+  "CONTACT_FROM_EMAIL",
+  "ENQUIRY_NOTIFICATION_TO",
+  "CONTACT_NOTIFICATION_EMAIL",
+] as const;
 const saved = Object.fromEntries(KEYS.map((k) => [k, process.env[k]]));
 
 afterEach(() => {
@@ -17,23 +26,48 @@ function set(values: Partial<Record<(typeof KEYS)[number], string>>) {
 }
 
 describe("email configuration", () => {
-  it("is configured with the primary variable names", () => {
-    set({ RESEND_API_KEY: "re_test", EMAIL_FROM: "Safe Bharat <enquiries@example.in>", ENQUIRY_NOTIFICATION_TO: "safebharatsales@gmail.com" });
-    expect(serverEnv.email()).toMatchObject({ configured: true, to: ["safebharatsales@gmail.com"] });
+  it("is configured with the primary variable names and accepts a Gmail sender", () => {
+    set({
+      SMTP_USER: "safebharatsales@gmail.com",
+      SMTP_PASSWORD: "abcdefghijklmnop",
+      EMAIL_FROM: "Safe Bharat <safebharatsales@gmail.com>",
+      ENQUIRY_NOTIFICATION_TO: "safebharatsales@gmail.com",
+    });
+    expect(serverEnv.email()).toMatchObject({ configured: true, from: "Safe Bharat <safebharatsales@gmail.com>", to: ["safebharatsales@gmail.com"] });
+  });
+
+  it("defaults to Gmail over implicit TLS and sends from the SMTP mailbox", () => {
+    set({ SMTP_USER: "safebharatsales@gmail.com", SMTP_PASSWORD: "abcdefghijklmnop", ENQUIRY_NOTIFICATION_TO: "x@example.in" });
+    expect(serverEnv.email()).toMatchObject({ configured: true, host: "smtp.gmail.com", port: 465, from: "Safe Bharat <safebharatsales@gmail.com>" });
+  });
+
+  it("uses a custom host and port", () => {
+    set({ SMTP_HOST: "smtp.example.in", SMTP_PORT: "587", SMTP_USER: "u@example.in", SMTP_PASSWORD: "secret", ENQUIRY_NOTIFICATION_TO: "x@example.in" });
+    expect(serverEnv.email()).toMatchObject({ configured: true, host: "smtp.example.in", port: 587 });
+  });
+
+  it("removes the spaces Google shows inside an App Password", () => {
+    set({ SMTP_USER: "u@gmail.com", SMTP_PASSWORD: "abcd efgh ijkl mnop", ENQUIRY_NOTIFICATION_TO: "x@example.in" });
+    expect(serverEnv.email().password).toBe("abcdefghijklmnop");
   });
 
   it("accepts CONTACT_FROM_EMAIL and CONTACT_NOTIFICATION_EMAIL as aliases", () => {
-    set({ RESEND_API_KEY: "re_test", CONTACT_FROM_EMAIL: "Safe Bharat <enquiries@example.in>", CONTACT_NOTIFICATION_EMAIL: "a@example.in, b@example.in" });
+    set({
+      SMTP_USER: "u@example.in",
+      SMTP_PASSWORD: "secret",
+      CONTACT_FROM_EMAIL: "Safe Bharat <enquiries@example.in>",
+      CONTACT_NOTIFICATION_EMAIL: "a@example.in, b@example.in",
+    });
     expect(serverEnv.email()).toMatchObject({ configured: true, from: "Safe Bharat <enquiries@example.in>", to: ["a@example.in", "b@example.in"] });
   });
 
-  it("refuses a free-mail sender, which Resend can never verify", () => {
-    set({ RESEND_API_KEY: "re_test", EMAIL_FROM: "Safe Bharat <safebharatsales@gmail.com>", ENQUIRY_NOTIFICATION_TO: "safebharatsales@gmail.com" });
-    expect(serverEnv.email()).toMatchObject({ configured: false, senderUnverifiable: true });
+  it("is not configured without an SMTP password", () => {
+    set({ SMTP_USER: "u@example.in", ENQUIRY_NOTIFICATION_TO: "x@example.in" });
+    expect(serverEnv.email().configured).toBe(false);
   });
 
-  it("is not configured without an API key", () => {
-    set({ EMAIL_FROM: "enquiries@example.in", ENQUIRY_NOTIFICATION_TO: "x@example.in" });
+  it("is not configured with an invalid port", () => {
+    set({ SMTP_PORT: "abc", SMTP_USER: "u@example.in", SMTP_PASSWORD: "secret", ENQUIRY_NOTIFICATION_TO: "x@example.in" });
     expect(serverEnv.email().configured).toBe(false);
   });
 });

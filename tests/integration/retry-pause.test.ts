@@ -7,7 +7,7 @@ import { siteConfig } from "@/config/site";
 import { FakeEmailSender } from "../support/fakes";
 
 // Test database only (enforced by tests/support/setup-integration.ts). The email
-// sender is always a fake, so no test here can reach Resend.
+// sender is always a fake, so no test here can reach the SMTP server.
 const db = createPrismaClient(process.env.TEST_DATABASE_URL!);
 let n = 0;
 

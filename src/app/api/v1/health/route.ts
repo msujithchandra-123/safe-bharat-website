@@ -24,7 +24,7 @@ export async function GET(): Promise<Response> {
     checks: {
       database,
       emailAutoRetry: serverEnv.emailAutoRetry() ? "enabled" : "paused",
-      email: serverEnv.email().configured ? "configured" : serverEnv.email().senderUnverifiable ? "sender-domain-not-verifiable" : "not-configured",
+      email: serverEnv.email().configured ? "configured" : "not-configured",
       spamProtection: !serverEnv.turnstile().secretKey
         ? "not-configured"
         : isTurnstileTestSecret(serverEnv.turnstile().secretKey)

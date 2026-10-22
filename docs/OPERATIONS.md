@@ -12,7 +12,7 @@ Attachments live in the private bucket under the `storageKey` recorded in `Enqui
 
 - Each enquiry is saved **before** any email is attempted. An email failure never loses a lead, and the visitor still gets their reference number.
 - `emailStatus` is `SENT`, `FAILED`, `PENDING` or `NOT_CONFIGURED`. Failures record `emailAttempts`, `emailLastError` and `emailLastAttemptAt`.
-- Retries are triggered after new submissions, and by the maintenance job (`/api/v1/cron/maintenance`). There is a 5-minute backoff and a maximum of 6 attempts, each enquiry is claimed atomically, and Resend idempotency keys prevent duplicate emails.
+- Retries are triggered after new submissions, and by the maintenance job (`/api/v1/cron/maintenance`). There is a 5-minute backoff and a maximum of 6 attempts, and each enquiry is claimed atomically. Each email keeps a fixed Message-ID across retries, but SMTP cannot guarantee exactly-once delivery: a send that timed out after Gmail accepted it can arrive twice.
 - To pause automatic retries (for example while the sender domain is being fixed), set `EMAIL_AUTO_RETRY=false`. Failed notifications are then left exactly as they are: no resend, and no change to their status, attempt count or timestamps. Retention and rate-limit cleanup still run. `/api/v1/health` reports `emailAutoRetry: "paused"`. Remove the setting, or set it to `true`, to resume. Retries are enabled when the setting is not configured.
 - To find enquiries that never got through: `SELECT "referenceNumber", "createdAt", "emailLastError" FROM "Enquiry" WHERE "emailStatus" <> 'SENT' ORDER BY "createdAt" DESC;`
 

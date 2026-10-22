@@ -11,27 +11,30 @@ function read(name: string): string | undefined {
   return value ? value : undefined;
 }
 
-const FREE_MAIL_DOMAINS = new Set(["gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "outlook.com", "hotmail.com", "live.com", "rediffmail.com", "icloud.com"]);
-
 export const serverEnv = {
   isProduction: () => process.env.NODE_ENV === "production",
   databaseUrl: () => read("DATABASE_URL"),
 
+  /** SMTP mailbox that sends every notification (Gmail by default, authenticated with an App Password). */
   email: () => {
-    const apiKey = read("RESEND_API_KEY");
+    const host = read("SMTP_HOST") ?? "smtp.gmail.com";
+    const port = Number(read("SMTP_PORT") ?? "465");
+    const user = read("SMTP_USER");
+    // Google displays App Passwords in groups of four ("abcd efgh ijkl mnop"); the spaces are not part of it.
+    const password = read("SMTP_PASSWORD")?.replace(/\s+/g, "") || undefined;
     // CONTACT_FROM_EMAIL / CONTACT_NOTIFICATION_EMAIL are accepted as aliases.
-    const from = read("EMAIL_FROM") ?? read("CONTACT_FROM_EMAIL");
+    // Gmail rewrites any From address other than the authenticated mailbox, so the default is that mailbox.
+    const from = read("EMAIL_FROM") ?? read("CONTACT_FROM_EMAIL") ?? (user ? `Safe Bharat <${user}>` : undefined);
     const to = (read("ENQUIRY_NOTIFICATION_TO") ?? read("CONTACT_NOTIFICATION_EMAIL") ?? "")
       .split(",")
       .map((v) => v.trim())
       .filter(Boolean);
-    // Resend only sends from domains you have verified; free-mail domains can never be verified.
-    const senderDomain = from?.match(/@([^>\s]+)>?\s*$/)?.[1]?.toLowerCase();
-    const senderUnverifiable = Boolean(senderDomain && FREE_MAIL_DOMAINS.has(senderDomain));
     return {
-      configured: Boolean(apiKey && from && to.length > 0 && !senderUnverifiable),
-      senderUnverifiable,
-      apiKey,
+      configured: Boolean(user && password && from && to.length > 0 && Number.isInteger(port) && port > 0),
+      host,
+      port,
+      user,
+      password,
       from,
       to,
       sendAcknowledgement: read("SEND_CUSTOMER_ACKNOWLEDGEMENT") !== "false",

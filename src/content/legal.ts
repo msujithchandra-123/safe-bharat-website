@@ -15,7 +15,7 @@ export interface PolicySection {
 }
 
 export const privacyPolicy = {
-  lastUpdated: "15 October 2026",
+  lastUpdated: "22 October 2026",
   version: siteConfig.privacyNoticeVersion,
   /** `aiProvider` is the company that processes assistant messages, e.g. "Google (Gemini API)". */
   sections: (retentionDays: number, aiProvider: string): PolicySection[] => [
@@ -46,7 +46,7 @@ export const privacyPolicy = {
     {
       heading: "Service providers",
       paragraphs: [
-        `We use trusted service providers to operate this website. They process data on our behalf: website hosting and database hosting; Resend for sending email; Cloudflare Turnstile for spam protection; ${aiProvider} for the AI assistant; and, where attachments are enabled, a private cloud storage bucket. Some of these providers may process data outside India.`,
+        `We use trusted service providers to operate this website. They process data on our behalf: website hosting and database hosting; Google (Gmail) for sending email; Cloudflare Turnstile for spam protection; ${aiProvider} for the AI assistant; and, where attachments are enabled, a private cloud storage bucket. Some of these providers may process data outside India.`,
       ],
     },
     {
